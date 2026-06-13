@@ -75,7 +75,13 @@ export interface FilterRule {
 declare module '@tanstack/react-table' {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   interface ColumnMeta<TData, TValue> {
+    /** Human-readable name for the column. Used by the auto-rendered header
+     *  and the columns-visibility menu. */
     label?:          string
+    /** Optional shorter label used only by the auto-rendered header (e.g. "#"
+     *  in the table when the menu still wants the long "Article #" label).
+     *  Falls back to `label`. */
+    shortLabel?:     string
     filterType?:     FilterType
     filterOptions?:  FilterOption[]
     /** Reads the raw value used for filtering; defaults to row[columnId]. */

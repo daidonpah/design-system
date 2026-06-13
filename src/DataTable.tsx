@@ -19,6 +19,7 @@ import { useTableState } from './useTableState'
 import { DataTableFilters, TableFiltersProvider, type FilterableColumn } from './DataTableFilters'
 import { applyFilters, defaultOperator, newRuleId } from './tableFilters'
 import { getThClassName, getTdClassName, useScrollShadows } from './tableLayout'
+import { TableColumnHeader } from './TableColumnHeader'
 
 // Generic, declarative table that owns search / filters / column visibility /
 // sorting / pagination / selection / sticky-header & pinned-column layout /
@@ -119,14 +120,25 @@ export function DataTable<T>({
     [data, filterRules, filterCombinator, filterAccessors],
   )
 
-  // When selection is enabled, prepend a built-in checkbox column so callers
-  // never have to spell it out. It pins left to ride along with any other
-  // left-pinned columns, opts out of sorting/hiding, and reads `getRowId` via
-  // TanStack's row API — which is why `getRowId` is required in that mode.
-  const finalColumns = useMemo<ColumnDef<T>[]>(
-    () => enableSelection ? [buildSelectionColumn<T>(), ...columns] : columns,
-    [enableSelection, columns],
-  )
+  // Auto-decorate column headers: any column that doesn't define its own
+  // `header` gets a TableColumnHeader rendered with the column's label, giving
+  // it sort/filter/hide UI without callers having to spell it out. Columns
+  // that need custom content (or an empty header, like action columns) keep
+  // whatever they passed — we only fill in `undefined`.
+  //
+  // When selection is enabled, also prepend a built-in checkbox column so
+  // callers never have to spell that one out either. It pins left, opts out
+  // of sorting/hiding, and reads `getRowId` via TanStack's row API.
+  const finalColumns = useMemo<ColumnDef<T>[]>(() => {
+    const decorated = columns.map((col) => {
+      if (col.header !== undefined) return col
+      const accessorKey = (col as { accessorKey?: string }).accessorKey
+      const id          = accessorKey ?? col.id ?? ''
+      const label       = col.meta?.shortLabel ?? col.meta?.label ?? id
+      return { ...col, header: ({ column }) => <TableColumnHeader column={column} label={label} /> } as ColumnDef<T>
+    })
+    return enableSelection ? [buildSelectionColumn<T>(), ...decorated] : decorated
+  }, [enableSelection, columns])
 
   const table = useReactTable<T>({
     data: filteredData,
