@@ -21,6 +21,11 @@ export function TableColumnHeader<TData, TValue>({ column, label }: Props<TData,
   const showMenu  = canFilter || canHide
   const alignEnd  = column.columnDef.meta?.align === 'right'
 
+  // Show priority only while multi-sort is in play; single-sort renders the
+  // arrow alone to stay quiet in the common case.
+  const sortIndex = column.getSortIndex()
+  const priority  = (filters?.sortCount ?? 0) > 1 && sortIndex >= 0 ? sortIndex + 1 : null
+
   return (
     <div className={cn('group flex items-center gap-1', alignEnd && 'justify-end')}>
       {canSort ? (
@@ -29,7 +34,7 @@ export function TableColumnHeader<TData, TValue>({ column, label }: Props<TData,
           className="flex items-center whitespace-nowrap font-medium hover:text-foreground"
         >
           {label}
-          <SortIcon sorted={column.getIsSorted()} />
+          <SortIcon sorted={column.getIsSorted()} priority={priority} />
         </button>
       ) : (
         <span className="whitespace-nowrap font-medium">{label}</span>
@@ -48,10 +53,19 @@ export function TableColumnHeader<TData, TValue>({ column, label }: Props<TData,
   )
 }
 
-function SortIcon({ sorted }: { sorted: false | 'asc' | 'desc' }) {
-  if (sorted === 'asc')  return <ArrowUp   className="ml-1 inline h-3 w-3" />
-  if (sorted === 'desc') return <ArrowDown className="ml-1 inline h-3 w-3" />
-  return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-40" />
+function SortIcon({ sorted, priority }: { sorted: false | 'asc' | 'desc'; priority: number | null }) {
+  if (sorted === false) return <ArrowUpDown className="ml-1 inline h-3 w-3 opacity-40" />
+  const Arrow = sorted === 'asc' ? ArrowUp : ArrowDown
+  return (
+    <span className="ml-1 inline-flex items-center gap-0.5">
+      <Arrow className="inline h-3 w-3" />
+      {priority != null && (
+        <span className="text-[10px] font-semibold leading-none tabular-nums text-muted-foreground">
+          {priority}
+        </span>
+      )}
+    </span>
+  )
 }
 
 interface HeaderMenuProps {

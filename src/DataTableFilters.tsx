@@ -25,9 +25,13 @@ export interface FilterableColumn {
 
 // Context lets per-column header menus reach back into the table's filter
 // popover (open it, pre-add a rule for the column the user clicked from).
+// Also carries `sortCount` so the header can render a priority badge on the
+// sort arrow only when multi-sort is active — kept here to avoid spinning up
+// a second context just for one number.
 interface TableFiltersContextValue {
   openForColumn: (columnId: string) => void
   isFilterable:  (columnId: string) => boolean
+  sortCount:     number
 }
 const TableFiltersContext = createContext<TableFiltersContextValue | null>(null)
 

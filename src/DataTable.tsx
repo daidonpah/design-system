@@ -193,7 +193,9 @@ export function DataTable<T>({
   )
 
   // Per-column-header menus reach back here to open the filter popover and
-  // append a sensible default rule for the column the user clicked.
+  // append a sensible default rule for the column the user clicked. The
+  // current sort-stack size also rides along so the header can show priority
+  // badges only when more than one column is sorted.
   const filtersCtx = useMemo(() => ({
     isFilterable: (id: string) => filterableColumns.some(c => c.id === id),
     openForColumn: (id: string) => {
@@ -206,7 +208,8 @@ export function DataTable<T>({
       )
       setFiltersOpen(true)
     },
-  }), [filterableColumns, setFilterRules])
+    sortCount: sorting.length,
+  }), [filterableColumns, setFilterRules, sorting.length])
 
   // `autoHeight` plugs into a flex column ancestor: `flex-1` claims remaining
   // space, `min-h-0` lets the body's overflow take effect (without it flex
