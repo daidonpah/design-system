@@ -25,7 +25,7 @@ export function TableColumnHeader<TData, TValue>({ column, label }: Props<TData,
     <div className={cn('group flex items-center gap-1', alignEnd && 'justify-end')}>
       {canSort ? (
         <button
-          onClick={() => column.toggleSorting(column.getIsSorted() === 'asc', true)}
+          onClick={column.getToggleSortingHandler()}
           className="flex items-center whitespace-nowrap font-medium hover:text-foreground"
         >
           {label}

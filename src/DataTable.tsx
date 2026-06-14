@@ -120,6 +120,20 @@ export function DataTable<T>({
     [data, filterRules, filterCombinator, filterAccessors],
   )
 
+  // Pre-sort by rowId so two things hold without any extra config:
+  //   • When no user sort is active, rows render in ascending row-id order.
+  //   • Under any user sort, ties resolve to row-id order, because TanStack's
+  //     sorted row model breaks ties with `rowA.index - rowB.index` (= the
+  //     position in the input array, which we just made = row-id order).
+  // `localeCompare` with `{ numeric: true }` handles both pure-numeric ids
+  // ("2" < "10") and alphanumeric ones ("AB2" < "AB10") naturally.
+  const sortedFilteredData = useMemo(() => {
+    if (filteredData.length < 2) return filteredData
+    const indexed = filteredData.map((row, i) => [row, getRowId(row, i)] as const)
+    indexed.sort((a, b) => a[1].localeCompare(b[1], undefined, { numeric: true }))
+    return indexed.map(([row]) => row)
+  }, [filteredData, getRowId])
+
   // Auto-decorate column headers: any column that doesn't define its own
   // `header` gets a TableColumnHeader rendered with the column's label, giving
   // it sort/filter/hide UI without callers having to spell it out. Columns
@@ -141,7 +155,7 @@ export function DataTable<T>({
   }, [enableSelection, columns])
 
   const table = useReactTable<T>({
-    data: filteredData,
+    data: sortedFilteredData,
     columns: finalColumns,
     getRowId,
     state: { sorting, columnFilters, columnVisibility, rowSelection, globalFilter, pagination },
